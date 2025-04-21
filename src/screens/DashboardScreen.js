@@ -1,11 +1,59 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Image,
+  Alert,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const DashboardScreen = () => {
   const navigation = useNavigation();
+
+  const [clockedIn, setClockedIn] = useState(false);
+  const [clockInTime, setClockInTime] = useState(null);
+  const [history, setHistory] = useState([]);
+
+  const handleClockIn = () => {
+    if (clockedIn) {
+      Alert.alert('Already Clocked In', 'You must clock out before clocking in again.');
+      return;
+    }
+
+    const now = new Date();
+    setClockedIn(true);
+    setClockInTime(now.toString()); 
+  };
+
+  const handleClockOut = () => {
+    if (!clockedIn || !clockInTime) {
+      Alert.alert('Not Clocked In', 'Please clock in before clocking out.');
+      return;
+    }
+
+    const clockOutTime = new Date();
+    const clockInDate = new Date(clockInTime);
+    const durationMs = clockOutTime - clockInDate;
+    const durationMin = Math.floor(durationMs / 60000);
+
+    const newLog = {
+      date: clockOutTime.toLocaleDateString(),
+      in: clockInDate.toLocaleTimeString(),
+      out: clockOutTime.toLocaleTimeString(),
+      duration: durationMin,
+    };
+
+    setHistory([newLog, ...history]);
+    setClockedIn(false);
+    setClockInTime(null);
+
+    Alert.alert('Clocked Out', `You worked for ${durationMin} minutes`);
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -40,39 +88,79 @@ const DashboardScreen = () => {
       <View style={styles.upcomingCard}>
         <Text style={styles.sectionTitle}>Upcoming Shift</Text>
         <Text style={styles.shiftTime}>Shift Time</Text>
-        <Text style={styles.shiftHour}>9:00am - 5:00pm</Text>
+        <Text style={styles.shiftHour}>Monday 9:00am - 5:00pm</Text>
+        <Text style={styles.shiftTime}>Shift Time</Text>
+        <Text style={styles.shiftHour}>Tuesday 9:00am - 5:00pm</Text>
       </View>
 
-      {/* Recommended Products (Clock In Cards) */}
+      {/* Recommended Products */}
       <Text style={styles.sectionTitle}>Recommended Products</Text>
 
-      <TouchableOpacity
-        style={styles.clockCard}
-        onPress={() => navigation.navigate('ClockIn')}
-      >
+      <View style={styles.clockCard}>
         <MaterialCommunityIcons
           name="clock-outline"
           size={24}
           color="white"
           style={styles.clockIcon}
         />
-        <Text style={styles.clockText}>Next Clock In</Text>
-      </TouchableOpacity>
+        <Text style={styles.clockText}>Clock In</Text>
+      </View>
       <Text style={styles.shiftLabel}>Monday 9:00am - 5:00pm</Text>
 
-      <TouchableOpacity
-        style={styles.clockCard}
-        onPress={() => navigation.navigate('ClockIn')}
-      >
+      <View style={styles.clockCard}>
         <MaterialCommunityIcons
           name="clock-outline"
           size={24}
           color="white"
           style={styles.clockIcon}
         />
-        <Text style={styles.clockText}>Next Clock In</Text>
-      </TouchableOpacity>
-      <Text style={styles.shiftLabel}>Tuesday 9:00am - 5:00pm</Text>
+        <Text style={styles.clockText}>Clock In</Text>
+      </View>
+      <Text style={styles.shiftLabel2}>Tuesday 9:00am - 5:00pm</Text>
+
+
+      {/* Attendance Checker */}
+      <Text style={styles.sectionTitle}>Attendance Checker</Text>
+      <View style={styles.attendanceSection}>
+        <Text style={styles.attendanceText}>
+          {clockedIn ? `Clocked in at: ${new Date(clockInTime).toLocaleString()}` : 'Not Clocked In'}
+        </Text>
+
+        <View style={styles.attendanceButtons}>
+          <TouchableOpacity
+            style={[styles.attendanceButton, { backgroundColor: clockedIn ? '#ccc' : '#207cca' }]}
+            onPress={handleClockIn}
+            disabled={clockedIn}
+          >
+            <Text style={styles.attendanceButtonText}>Clock In</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.attendanceButton, { backgroundColor: clockedIn ? '#f44336' : '#ccc' }]}
+            onPress={handleClockOut}
+            disabled={!clockedIn}
+          >
+            <Text style={styles.attendanceButtonText}>Clock Out</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* History Log Section */}
+      <Text style={styles.sectionTitle}>Clock-In/Out History</Text>
+      {history.length === 0 ? (
+        <Text style={{ marginHorizontal: 15, fontStyle: 'italic', color: '#777' }}>
+          No history yet.
+        </Text>
+      ) : (
+        history.map((log, index) => (
+          <View key={index} style={styles.historyCard}>
+            <Text style={styles.historyText}>Date: {log.date}</Text>
+            <Text style={styles.historyText}>In: {log.in}</Text>
+            <Text style={styles.historyText}>Out: {log.out}</Text>
+            <Text style={styles.historyText}>Duration: {log.duration} mins</Text>
+          </View>
+        ))
+      )}
     </ScrollView>
   );
 };
@@ -122,11 +210,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#eee',
     borderRadius: 8,
-    marginBottom: 20,
+    marginBottom: 50,
   },
   sectionTitle: {
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 20,
     marginHorizontal: 15,
     marginBottom: 8,
   },
@@ -162,7 +250,53 @@ const styles = StyleSheet.create({
     marginLeft: 15,
     marginBottom: 15,
     fontSize: 12,
-    fontWeight: 'Bold',
+    fontWeight: 'bold',
+  },
+  shiftLabel2: {
+    marginLeft: 15,
+    marginBottom: 15,
+    fontSize: 12,
+    fontWeight: 'bold',
+    marginBottom: 50,
+  },
+  attendanceSection: {
+    marginHorizontal: 15,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: '#eee',
+    borderRadius: 8,
+    backgroundColor: '#f9f9f9',
+  },
+  attendanceText: {
+    fontSize: 14,
+    marginBottom: 10,
+    fontWeight: '600',
+  },
+  attendanceButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  attendanceButton: {
+    padding: 10,
+    borderRadius: 5,
+    flex: 1,
+    marginHorizontal: 5,
+  },
+  attendanceButtonText: {
+    color: 'white',
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  historyCard: {
+    backgroundColor: '#f1f1f1',
+    padding: 12,
+    borderRadius: 8,
+    marginHorizontal: 15,
+    marginBottom: 10,
+  },
+  historyText: {
+    fontSize: 13,
+    marginBottom: 2,
   },
 });
 
