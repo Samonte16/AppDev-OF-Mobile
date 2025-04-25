@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 const LoginScreen = ({ navigation }) => {
@@ -56,17 +56,6 @@ const LoginScreen = ({ navigation }) => {
           <Text style={styles.loginButtonText}>Login</Text>
         </TouchableOpacity>
 
-        <Text style={styles.or}>──────── Or Continue with ────────</Text>
-
-        <View style={styles.socialContainer}>
-          <TouchableOpacity style={styles.socialButton}>
-            <Image source={require('../assets/fb-logo.png')} style={styles.socialIcon} resizeMode="contain" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.socialButton}>
-            <Image source={require('../assets/google-logo.png')} style={styles.socialIcon} resizeMode="contain" />
-          </TouchableOpacity>
-        </View>
-
         {/* Register Link */}
         <View style={styles.registerText}>
           <Text style={styles.registerTextLabel}>Don’t have an account?</Text>
@@ -89,8 +78,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40,
-    paddingVertical: 65,
-    paddingHorizontal: 30,
+    paddingVertical: 100,
+    paddingHorizontal: 80,
     alignItems: 'center',
     bottom: 30,
   },
@@ -158,31 +147,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Rasa-Bold',
   },
-  or: {
-    textAlign: 'center',
-    marginVertical: 10,
-    color: '#666',
-    fontFamily: 'Rasa-Regular',
-  },
-  socialContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
-  socialButton: {
-    padding: 12,
-    borderRadius: 50,
-    marginHorizontal: 20,
-    backgroundColor: '#eee',
-  },
-  socialIcon: {
-    width: 35,
-    height: 35,
-  },
   registerText: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 15,
+    marginTop: 65,
   },
   registerTextLabel: {
     color: '#666',

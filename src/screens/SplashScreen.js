@@ -1,3 +1,4 @@
+/*
 import React, { useEffect } from 'react';
 import { View, Text, Image, StyleSheet, ActivityIndicator, } from 'react-native';
 
@@ -48,3 +49,5 @@ const styles = StyleSheet.create({
 });
 
 export default SplashScreen;
+  
+  */

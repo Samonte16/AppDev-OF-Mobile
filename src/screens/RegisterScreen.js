@@ -1,14 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  Modal,
-  ScrollView,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, ScrollView, } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 const RegisterScreen = ({ navigation }) => {
@@ -132,19 +123,6 @@ const RegisterScreen = ({ navigation }) => {
             <Text style={styles.registerButtonText}>Register</Text>
           </TouchableOpacity>
 
-          {/* Or Continue */}
-          <Text style={styles.or}>────────  Or Continue with  ────────</Text>
-
-          {/* Social */}
-          <View style={styles.socialContainer}>
-            <TouchableOpacity style={styles.socialButton}>
-              <Image source={require('../assets/fb-logo.png')} style={styles.socialIcon} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.socialButton}>
-              <Image source={require('../assets/google-logo.png')} style={styles.socialIcon} />
-            </TouchableOpacity>
-          </View>
-
           {/* Login Redirect */}
           <Text style={styles.loginRedirect}>
             Already have an account?
@@ -194,8 +172,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomLeftRadius: 50,
     borderBottomRightRadius: 50,
-    paddingVertical: 40,
-    paddingHorizontal: 25,
+    paddingVertical: 80,
+    paddingHorizontal: 55,
     width: '100%',
   },
   logo: {
@@ -299,27 +277,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontFamily: 'Rasa-Bold',
-  },
-  or: {
-    textAlign: 'center',
-    color: '#666',
-    marginBottom: 10,
-    fontFamily: 'Rasa-Regular',
-  },
-  socialContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 30,
-  },
-  socialButton: {
-    backgroundColor: '#eee',
-    borderRadius: 40,
-    padding: 10,
-    marginHorizontal: 15,
-  },
-  socialIcon: {
-    width: 40,
-    height: 40,
   },
   loginRedirect: {
     textAlign: 'center',

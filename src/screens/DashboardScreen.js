@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Image,
-  Alert,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, Alert, } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -59,7 +51,7 @@ const DashboardScreen = () => {
     <ScrollView contentContainerStyle={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerText}>My Schedule</Text>
+        <Text style={styles.headerText}>Onlyfriends</Text>
       </View>
 
       {/* User Info */}
@@ -88,36 +80,7 @@ const DashboardScreen = () => {
       <View style={styles.upcomingCard}>
         <Text style={styles.sectionTitle}>Upcoming Shift</Text>
         <Text style={styles.shiftTime}>Shift Time</Text>
-        <Text style={styles.shiftHour}>Monday 9:00am - 5:00pm</Text>
-        <Text style={styles.shiftTime}>Shift Time</Text>
-        <Text style={styles.shiftHour}>Tuesday 9:00am - 5:00pm</Text>
       </View>
-
-      {/* Recommended Products */}
-      <Text style={styles.sectionTitle}>Recommended Products</Text>
-
-      <View style={styles.clockCard}>
-        <MaterialCommunityIcons
-          name="clock-outline"
-          size={24}
-          color="white"
-          style={styles.clockIcon}
-        />
-        <Text style={styles.clockText}>Clock In</Text>
-      </View>
-      <Text style={styles.shiftLabel}>Monday 9:00am - 5:00pm</Text>
-
-      <View style={styles.clockCard}>
-        <MaterialCommunityIcons
-          name="clock-outline"
-          size={24}
-          color="white"
-          style={styles.clockIcon}
-        />
-        <Text style={styles.clockText}>Clock In</Text>
-      </View>
-      <Text style={styles.shiftLabel2}>Tuesday 9:00am - 5:00pm</Text>
-
 
       {/* Attendance Checker */}
       <Text style={styles.sectionTitle}>Attendance Checker</Text>
@@ -147,20 +110,23 @@ const DashboardScreen = () => {
 
       {/* History Log Section */}
       <Text style={styles.sectionTitle}>Clock-In/Out History</Text>
-      {history.length === 0 ? (
-        <Text style={{ marginHorizontal: 15, fontStyle: 'italic', color: '#777' }}>
-          No history yet.
-        </Text>
-      ) : (
-        history.map((log, index) => (
-          <View key={index} style={styles.historyCard}>
-            <Text style={styles.historyText}>Date: {log.date}</Text>
-            <Text style={styles.historyText}>In: {log.in}</Text>
-            <Text style={styles.historyText}>Out: {log.out}</Text>
-            <Text style={styles.historyText}>Duration: {log.duration} mins</Text>
-          </View>
-        ))
-      )}
+        <View style={styles.historyContainer}>
+          {history.length === 0 ? (
+            <Text style={styles.noHistoryText}>No history yet.</Text>
+          ) : (
+            <ScrollView style={styles.historyScroll} showsVerticalScrollIndicator={true}>
+              {history.map((log, index) => (
+                <View key={index} style={styles.historyCard}>
+                  <Text style={styles.historyText}>Date: {log.date}</Text>
+                  <Text style={styles.historyText}>In: {log.in}</Text>
+                  <Text style={styles.historyText}>Out: {log.out}</Text>
+                  <Text style={styles.historyText}>Duration: {log.duration} mins</Text>
+                </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+
     </ScrollView>
   );
 };
@@ -227,25 +193,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 4,
   },
-  clockCard: {
-    height: 150,
-    backgroundColor: '#207cca',
-    marginHorizontal: 15,
-    marginBottom: 8,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  clockIcon: {
-    position: 'absolute',
-    top: 10,
-    left: 10,
-  },
-  clockText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
   shiftLabel: {
     marginLeft: 15,
     marginBottom: 15,
@@ -298,6 +245,24 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginBottom: 2,
   },
+  historyContainer: {
+    height: 200, // Adjust as needed
+    marginHorizontal: 15,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#eee',
+    borderRadius: 8,
+    backgroundColor: '#fafafa',
+    padding: 10,
+  },
+  historyScroll: {
+    flex: 1,
+  },
+  noHistoryText: {
+    fontStyle: 'italic',
+    color: '#777',
+  },
+  
 });
 
 export default DashboardScreen;
