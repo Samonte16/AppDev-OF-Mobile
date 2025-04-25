@@ -26,7 +26,7 @@ const AppSettingsScreen = () => {
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>App Settings</Text>
+        <Text style={styles.headerTitle}>Settings</Text>
       </View>
 
       {/* Top Icon Buttons */}
