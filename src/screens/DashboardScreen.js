@@ -77,8 +77,8 @@ const DashboardScreen = () => {
       </View>
 
       {/* Upcoming Shift */}
+      <Text style={styles.sectionTitle}>Upcoming Shift</Text>
       <View style={styles.upcomingCard}>
-        <Text style={styles.sectionTitle}>Upcoming Shift</Text>
         <Text style={styles.shiftTime}>Shift Time</Text>
       </View>
 
