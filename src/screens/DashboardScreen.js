@@ -1,50 +1,140 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, Alert, } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const DashboardScreen = () => {
   const navigation = useNavigation();
 
+  const [loggedInUser, setLoggedInUser] = useState(null);
   const [clockedIn, setClockedIn] = useState(false);
   const [clockInTime, setClockInTime] = useState(null);
   const [history, setHistory] = useState([]);
+  const [schedules, setSchedules] = useState([]);
+  const [selectedSchedule, setSelectedSchedule] = useState(null);
 
-  const handleClockIn = () => {
+  // Fetch logged-in user data
+  useEffect(() => {
+    const fetchLoggedInUser = async () => {
+      const userData = await AsyncStorage.getItem('loggedInUser');
+      if (userData) {
+        setLoggedInUser(JSON.parse(userData));
+      }
+    };
+
+    fetchLoggedInUser();
+  }, []);
+
+  // Fetch schedules
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      try {
+        const response = await fetch('http://192.168.1.32:3000/api/schedules');
+        const data = await response.json();
+        setSchedules(data); // Save schedules to state
+      } catch (error) {
+        console.error('Error fetching schedules:', error);
+      }
+    };
+
+    fetchSchedules();
+  }, []);
+
+  // Fetch logs
+  const fetchLogs = async () => {
+    try {
+      const response = await fetch(`http://192.168.1.32:3000/api/logs?userId=${loggedInUser.id}`);
+      const data = await response.json();
+      setHistory(data); // Save logs to state
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (loggedInUser) {
+      fetchLogs();
+    }
+  }, [loggedInUser]);
+
+  const handleSelectSchedule = (schedule) => {
+    setSelectedSchedule(schedule);
+  };
+
+  const handleClockIn = async () => {
+    if (!selectedSchedule) {
+      Alert.alert('Error', 'Please select a schedule before clocking in.');
+      return;
+    }
+
     if (clockedIn) {
       Alert.alert('Already Clocked In', 'You must clock out before clocking in again.');
       return;
     }
 
     const now = new Date();
-    setClockedIn(true);
-    setClockInTime(now.toString()); 
+    const timestamp = now.toISOString();
+
+    try {
+      const response = await fetch('http://192.168.1.32:3000/api/logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: loggedInUser.id,
+          type: 'in',
+          time: timestamp,
+          scheduleId: selectedSchedule.id, // Include schedule ID
+        }),
+      });
+
+      if (response.ok) {
+        setClockedIn(true);
+        setClockInTime(now.toString());
+        fetchLogs(); // Refresh logs
+        Alert.alert('Clocked In', `You clocked in at ${now.toLocaleTimeString()}`);
+      } else {
+        Alert.alert('Error', 'Failed to clock in.');
+      }
+    } catch (error) {
+      console.error('Error during clock-in:', error);
+      Alert.alert('Error', 'An error occurred. Please try again.');
+    }
   };
 
-  const handleClockOut = () => {
+  const handleClockOut = async () => {
     if (!clockedIn || !clockInTime) {
       Alert.alert('Not Clocked In', 'Please clock in before clocking out.');
       return;
     }
 
     const clockOutTime = new Date();
-    const clockInDate = new Date(clockInTime);
-    const durationMs = clockOutTime - clockInDate;
-    const durationMin = Math.floor(durationMs / 60000);
+    const timestamp = clockOutTime.toISOString();
 
-    const newLog = {
-      date: clockOutTime.toLocaleDateString(),
-      in: clockInDate.toLocaleTimeString(),
-      out: clockOutTime.toLocaleTimeString(),
-      duration: durationMin,
-    };
+    try {
+      const response = await fetch('http://192.168.1.32:3000/api/logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: loggedInUser.id,
+          type: 'out',
+          time: timestamp,
+        }),
+      });
 
-    setHistory([newLog, ...history]);
-    setClockedIn(false);
-    setClockInTime(null);
-
-    Alert.alert('Clocked Out', `You worked for ${durationMin} minutes`);
+      if (response.ok) {
+        fetchLogs(); // Refresh logs
+        setClockedIn(false);
+        setClockInTime(null);
+        Alert.alert('Clocked Out', `You clocked out at ${clockOutTime.toLocaleTimeString()}`);
+      } else {
+        Alert.alert('Error', 'Failed to clock out.');
+      }
+    } catch (error) {
+      console.error('Error during clock-out:', error);
+      Alert.alert('Error', 'An error occurred. Please try again.');
+    }
   };
 
   return (
@@ -57,7 +147,7 @@ const DashboardScreen = () => {
       {/* User Info */}
       <View style={styles.userSection}>
         <Image source={require('../assets/sample-prof-photo.png')} style={styles.profilePic} />
-        <Text style={styles.userName}>Your Name</Text>
+        <Text style={styles.userName}>{loggedInUser ? loggedInUser.full_name : 'Your Name'}</Text>
       </View>
 
       {/* Navigation Buttons */}
@@ -76,11 +166,29 @@ const DashboardScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Upcoming Shift */}
-      <Text style={styles.sectionTitle}>Upcoming Shift</Text>
-      <View style={styles.upcomingCard}>
-        <Text style={styles.shiftTime}>Shift Time</Text>
-      </View>
+      {/* Available Schedules */}
+      <Text style={styles.sectionTitle}>Available Schedules</Text>
+      <ScrollView horizontal style={styles.scheduleList}>
+        {schedules.map((schedule) => (
+          <TouchableOpacity
+            key={schedule.id}
+            style={[
+              styles.scheduleButton,
+              selectedSchedule?.id === schedule.id && styles.selectedScheduleButton,
+            ]}
+            onPress={() => handleSelectSchedule(schedule)}
+          >
+            <Text style={styles.scheduleText}>
+              {new Date(schedule.date).toLocaleDateString('en-US', {
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric',
+              })}{' '}
+              - {schedule.time}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
 
       {/* Attendance Checker */}
       <Text style={styles.sectionTitle}>Attendance Checker</Text>
@@ -110,23 +218,26 @@ const DashboardScreen = () => {
 
       {/* History Log Section */}
       <Text style={styles.sectionTitle}>Clock-In/Out History</Text>
-        <View style={styles.historyContainer}>
-          {history.length === 0 ? (
-            <Text style={styles.noHistoryText}>No history yet.</Text>
-          ) : (
-            <ScrollView style={styles.historyScroll} showsVerticalScrollIndicator={true}>
-              {history.map((log, index) => (
-                <View key={index} style={styles.historyCard}>
-                  <Text style={styles.historyText}>Date: {log.date}</Text>
-                  <Text style={styles.historyText}>In: {log.in}</Text>
-                  <Text style={styles.historyText}>Out: {log.out}</Text>
-                  <Text style={styles.historyText}>Duration: {log.duration} mins</Text>
-                </View>
-              ))}
-            </ScrollView>
-          )}
-        </View>
-
+      <View style={styles.historyContainer}>
+        {history.length === 0 ? (
+          <Text style={styles.noHistoryText}>No history yet.</Text>
+        ) : (
+          <ScrollView style={styles.historyScroll} showsVerticalScrollIndicator={true}>
+            {history.map((log, index) => (
+              <View key={index} style={styles.historyCard}>
+                <Text style={styles.historyText}>
+                  {new Date(log.time).toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}{' '}
+                  - {new Date(log.time).toLocaleTimeString()}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
+        )}
+      </View>
     </ScrollView>
   );
 };
@@ -170,41 +281,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: 80,
   },
-  upcomingCard: {
-    marginHorizontal: 15,
-    padding: 15,
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 8,
-    marginBottom: 50,
-  },
   sectionTitle: {
     fontWeight: 'bold',
     fontSize: 20,
     marginHorizontal: 15,
     marginBottom: 8,
   },
-  shiftTime: {
+  scheduleList: {
+    marginHorizontal: 15,
+    marginBottom: 20,
+    flexDirection: 'row',
+  },
+  scheduleButton: {
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    marginRight: 10,
+    backgroundColor: '#f9f9f9',
+  },
+  selectedScheduleButton: {
+    backgroundColor: '#207cca',
+  },
+  scheduleText: {
+    color: '#333',
     fontWeight: '600',
-    fontSize: 13,
-  },
-  shiftHour: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  shiftLabel: {
-    marginLeft: 15,
-    marginBottom: 15,
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  shiftLabel2: {
-    marginLeft: 15,
-    marginBottom: 15,
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginBottom: 50,
   },
   attendanceSection: {
     marginHorizontal: 15,
@@ -234,19 +335,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: 'bold',
   },
-  historyCard: {
-    backgroundColor: '#f1f1f1',
-    padding: 12,
-    borderRadius: 8,
-    marginHorizontal: 15,
-    marginBottom: 10,
-  },
-  historyText: {
-    fontSize: 13,
-    marginBottom: 2,
-  },
   historyContainer: {
-    height: 200, // Adjust as needed
     marginHorizontal: 15,
     marginBottom: 20,
     borderWidth: 1,
@@ -255,14 +344,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#fafafa',
     padding: 10,
   },
-  historyScroll: {
-    flex: 1,
+  historyCard: {
+    backgroundColor: '#f1f1f1',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  historyText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   noHistoryText: {
     fontStyle: 'italic',
     color: '#777',
   },
-  
 });
 
 export default DashboardScreen;

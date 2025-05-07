@@ -1,15 +1,55 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, ScrollView, } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, ScrollView, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 const RegisterScreen = ({ navigation }) => {
-  const [gender, setGender] = useState('Male');
+  const [fullName, setFullName] = useState('');
+  const [gender, setGender] = useState('');
   const [age, setAge] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+
+  const handleRegister = async () => {
+    if (!agreedToTerms) {
+      Alert.alert('Error', 'You must agree to the Terms and Conditions.');
+      return;
+    }
+
+    const userData = {
+      fullName,
+      gender,
+      age,
+      phoneNumber: phone,
+      email,
+      password,
+    };
+
+    try {
+      const response = await fetch('http://192.168.1.32:3000/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+    
+      console.log('Response status:', response.status); // Log the status code
+      console.log('Response body:', await response.text()); // Log the response body
+    
+      if (response.ok) {
+        console.log('Navigating to Login screen...');
+        navigation.navigate('Login'); // Direct navigation
+      }else {
+        const error = await response.json();
+        Alert.alert('Error', error.message || 'Registration failed.');
+      }
+    } catch (error) {
+      console.error('Error during registration:', error); // Log the error
+      Alert.alert('Error', 'An error occurred. Please try again.');
+    }
+  };
 
   return (
     <View style={styles.root}>
@@ -30,7 +70,12 @@ const RegisterScreen = ({ navigation }) => {
           {/* Full Name */}
           <View style={styles.inputContainer}>
             <Icon name="user" size={20} color="#555" style={styles.icon} />
-            <TextInput placeholder="Please Enter your Full Name." style={styles.input} />
+            <TextInput
+              placeholder="Please Enter your Full Name."
+              style={styles.input}
+              value={fullName}
+              onChangeText={setFullName}
+            />
           </View>
 
           {/* Gender Selection */}
@@ -77,7 +122,13 @@ const RegisterScreen = ({ navigation }) => {
           {/* Email */}
           <View style={styles.inputContainer}>
             <Icon name="envelope" size={20} color="#555" style={styles.icon} />
-            <TextInput placeholder="Please Enter your Email." style={styles.input} keyboardType="email-address" />
+            <TextInput
+              placeholder="Please Enter your Email."
+              style={styles.input}
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
+            />
           </View>
 
           {/* Password */}
@@ -113,23 +164,14 @@ const RegisterScreen = ({ navigation }) => {
           </TouchableOpacity>
 
           {/* Register Button */}
-          <TouchableOpacity
-            style={styles.registerButton}
-            onPress={() => {
-              // Here you can add validation or API call if needed
-              navigation.navigate('Login'); // Navigate to Login after registration
-            }}
-          >
+          <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
             <Text style={styles.registerButtonText}>Register</Text>
           </TouchableOpacity>
 
           {/* Login Redirect */}
           <Text style={styles.loginRedirect}>
             Already have an account?
-            <Text
-              style={styles.loginLink}
-              onPress={() => navigation.navigate('Login')}
-            >
+            <Text style={styles.loginLink} onPress={() => navigation.navigate('Login')}>
               {' '}Login Here
             </Text>
           </Text>

@@ -1,13 +1,37 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const LoginScreen = ({ navigation }) => {
-  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // Define showPassword state
 
-  const handleLogin = () => {
-    // Add login logic or validation here if needed
-    navigation.navigate('Dashboard');
+  const handleLogin = async () => {
+    try {
+      const response = await fetch('http://192.168.1.32:3000/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+  
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Login successful:', data);
+  
+        // Save user data in AsyncStorage
+        await AsyncStorage.setItem('loggedInUser', JSON.stringify(data.user));
+  
+        navigation.navigate('Dashboard');
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Invalid email or password.');
+      }
+    } catch (error) {
+      console.error('Error during login:', error);
+      alert('An error occurred. Please try again.');
+    }
   };
 
   return (
@@ -28,7 +52,13 @@ const LoginScreen = ({ navigation }) => {
           <Text style={styles.label}>Email</Text>
           <View style={styles.inputContainer}>
             <Icon name="envelope" size={20} color="#777" style={styles.icon} />
-            <TextInput placeholder="Please Enter the Email." style={styles.input} keyboardType="email-address" />
+            <TextInput
+              placeholder="Please Enter the Email."
+              style={styles.input}
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
+            />
           </View>
         </View>
 
@@ -41,6 +71,8 @@ const LoginScreen = ({ navigation }) => {
               placeholder="Please Enter the Password."
               style={styles.input}
               secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
               <Icon name={showPassword ? 'eye' : 'eye-slash'} size={20} color="#777" />
